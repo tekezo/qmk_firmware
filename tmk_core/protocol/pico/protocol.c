@@ -90,6 +90,7 @@ void pico_cdc_disable_printf(void) {
     stdio_set_driver_enabled(&stdio_driver, false);
 }
 
+#ifdef PICO_PIO_USB_HOST_ENABLE
 void __not_in_flash_func(core1_main)(void) {
   sleep_ms(10);
 
@@ -107,6 +108,7 @@ void __not_in_flash_func(core1_main)(void) {
     tuh_task(); // tinyusb host task
   }
 }
+#endif
 
 void protocol_setup(void) {
 #ifdef PICO_PIO_USB_HOST_ENABLE
