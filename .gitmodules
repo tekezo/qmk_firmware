@@ -26,3 +26,6 @@
 	path = lib/pico-sdk
 	url = https://github.com/raspberrypi/pico-sdk.git
     ignore = dirty
+[submodule "lib/Pico-PIO-USB"]
+	path = lib/Pico-PIO-USB
+	url = git@github.com:sekigon-gonnoc/Pico-PIO-USB.git

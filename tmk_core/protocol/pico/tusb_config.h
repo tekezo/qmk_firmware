@@ -115,6 +115,30 @@
 #define CFG_TUD_MIDI_RX_BUFSIZE   64
 #define CFG_TUD_MIDI_TX_BUFSIZE   64
 
+//--------------------------------------------------------------------
+// HOST CONFIGURATION
+//--------------------------------------------------------------------
+
+#ifdef PICO_PIO_USB_HOST_ENABLE
+
+// Enable host stack with pio-usb if Pico-PIO-USB library is available
+#define CFG_TUH_ENABLED     1
+#define CFG_TUH_RPI_PIO_USB 1
+#define BOARD_TUH_RHPORT    1
+
+// Size of buffer to hold descriptors and other data used for enumeration
+#define CFG_TUH_ENUMERATION_BUFSIZE 256
+
+#define CFG_TUH_HUB                 1
+#define CFG_TUH_DEVICE_MAX          4
+
+#define CFG_TUH_HID                  4
+#define CFG_TUH_HID_EPIN_BUFSIZE    64
+#define CFG_TUH_HID_EPOUT_BUFSIZE   64
+
+#endif
+
+
 #ifdef __cplusplus
  }
 #endif
