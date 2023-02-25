@@ -13,13 +13,10 @@
 #include "tusb.h"
 
 extern matrix_row_t* matrix_dest;
-
-extern bool   ch559_start;
-extern bool   ch559_update_mode;
 matrix_row_t* matrix_mouse_dest;
 
 static int32_t led_count = -1;
-#define LED_BLINK_TIME_MS 100
+#define LED_BLINK_TIME_MS 50
 
 static uint8_t kbd_addr;
 static uint8_t kbd_instance;
@@ -36,8 +33,6 @@ int  send_led_report(uint8_t* leds);
 void matrix_init_custom(void) {
     setPinOutput(KQ_PIN_LED);
     writePinHigh(KQ_PIN_LED);
-
-    ch559_start = false;
 }
 
 bool matrix_scan_custom(matrix_row_t current_matrix[]) {
@@ -52,8 +47,9 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]) {
     if (led_count > 0) {
         if (timer_elapsed(led_count) < LED_BLINK_TIME_MS) {
             writePinLow(KQ_PIN_LED);
-        } else {
+        } else if (timer_elapsed(led_count) < 2 * LED_BLINK_TIME_MS) {
             writePinHigh(KQ_PIN_LED);
+        } else {
             led_count = -1;
         }
     }
@@ -68,6 +64,8 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]) {
                 current_matrix[rowIdx] = 0;
             }
         }
+
+        hid_disconnect_flag = false;
 
         return matrix_change;
     }
@@ -84,7 +82,9 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]) {
 
 void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance,
                       uint8_t const* desc_report, uint16_t desc_len) {
-    led_count = timer_read32();
+    if (led_count < 0) {
+        led_count = timer_read();
+    }
     report_descriptor_parser_user(instance, desc_report, desc_len);
 
     uint8_t const itf_protocol = tuh_hid_interface_protocol(dev_addr, instance);
@@ -92,6 +92,8 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance,
         kbd_addr     = dev_addr;
         kbd_instance = instance;
     }
+
+    tuh_hid_set_protocol(dev_addr, instance, HID_PROTOCOL_REPORT);
 
     tuh_hid_receive_report(dev_addr, instance);
 }
@@ -103,7 +105,9 @@ void tuh_hid_umount_cb(uint8_t dev_addr, uint8_t instance) {
 
 void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
                                 uint8_t const* report, uint16_t len) {
-    led_count = timer_read32();
+    if (led_count < 0) {
+        led_count = timer_read();
+    }
 
     while (hid_report_size > 0) {
         continue;
