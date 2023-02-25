@@ -197,7 +197,7 @@ void tud_cdc_rx_cb(uint8_t itf) {
 // Application can use this to send the next report
 // Note: For composite reports, report[0] is report ID
 void tud_hid_report_complete_cb(uint8_t itf, uint8_t const* report,
-                                uint8_t len) {
+                                uint16_t len) {
     (void)itf;
     (void)len;
 }
