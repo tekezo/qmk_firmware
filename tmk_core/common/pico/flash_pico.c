@@ -192,10 +192,10 @@ __attribute__((weak)) void pico_after_flash_operation(void) {}
 static int intr_stat;
 
 void FLASH_Lock(void) {
-    restore_interrupts(intr_stat);
     pico_after_flash_operation();
+    restore_interrupts(intr_stat);
 }
 void FLASH_Unlock(void) {
-    intr_stat = save_and_disable_interrupts();
     pico_before_flash_operation();
+    intr_stat = save_and_disable_interrupts();
 }

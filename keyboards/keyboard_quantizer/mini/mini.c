@@ -34,21 +34,71 @@
 #include "hardware/uart.h"
 #include "hardware/irq.h"
 #include "hardware/resets.h"
+#include "pico/multicore.h"
 #include "cdc_device.h"
+#include "tusb.h"
+#include "pio_usb.h"
 
 #include "RP2040.h"
 #include "core_cm0plus.h"
 
 #define LEN(x) (sizeof(x) / sizeof(x[0]))
 
-extern bool    ch559_update_mode;
 extern uint8_t device_cnt;
 extern uint8_t hid_info_cnt;
 
 keyboard_config_t keyboard_config;
 
+static volatile bool core1_stop_trigger;
+static volatile bool core1_start_trigger;
+
+void __not_in_flash_func(core1_main)(void) {
+    sleep_ms(10);
+
+    // Use tuh_configure() to pass pio configuration to the host stack
+    // Note: tuh_configure() must be called before
+    pio_usb_configuration_t pio_cfg = PIO_USB_DEFAULT_CONFIG;
+    pio_cfg.alarm_pool              = (void *)alarm_pool_create(2, 8);
+    tuh_configure(1, TUH_CFGID_RPI_PIO_USB_CONFIGURATION, &pio_cfg);
+
+    // To run USB SOF interrupt in core1, init host stack for pio_usb (roothub
+    // port1) on core1
+    tuh_init(1);
+
+    bool     core1_task_active = true;
+    uint32_t interrupt         = 0;
+
+    while (1) {
+        if (core1_task_active) tuh_task();  // tinyusb host task
+
+        if (core1_stop_trigger) {
+            interrupt         = save_and_disable_interrupts();
+            core1_task_active = false;
+            core1_stop_trigger = false;
+        } else if (core1_start_trigger) {
+            restore_interrupts(interrupt);
+            core1_task_active = true;
+            core1_start_trigger = false;
+        }
+    }
+}
+
+void pico_before_flash_operation(void) {
+    core1_stop_trigger = true;
+    while (core1_stop_trigger) {
+        continue;
+    }
+}
+
+void pico_after_flash_operation(void) {
+    core1_start_trigger = true;
+    while (core1_start_trigger) {
+        continue;
+    }
+}
+
 void pico_cdc_receive_cb(uint8_t const *buf, uint32_t cnt) {
-     if (cnt > 0) {
+    if (cnt > 0) {
         printf("%c\n", buf[0]);
 
         switch (buf[0]) {
@@ -70,6 +120,9 @@ void pico_cdc_receive_cb(uint8_t const *buf, uint32_t cnt) {
 
 void keyboard_post_init_kb_rev(void) {
     debug_enable = false;
+
+    multicore_reset_core1();
+    multicore_launch_core1(core1_main);
 
     if (keyboard_config.layer_to_combo) {
         convert_layer_to_combo();
@@ -237,8 +290,8 @@ enum via_kq_value_id_kb {
     id_config_ver = 0x01,
     id_bootloader,
     id_reset,
-    id_eeprom,  // read/write eeprom
-    id_host_os,      // get os
+    id_eeprom,   // read/write eeprom
+    id_host_os,  // get os
 };
 
 static void raw_hid_get_kb(uint8_t *data, uint8_t length) {

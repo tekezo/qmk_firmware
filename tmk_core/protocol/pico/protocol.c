@@ -39,11 +39,6 @@
 #include "hardware/watchdog.h"
 #include "tusb.h"
 
-#ifdef PICO_PIO_USB_HOST_ENABLE
-#include "pico/multicore.h"
-#include "pio_usb.h"
-#endif
-
 void platform_setup(void);
 extern char __StackTop;
 
@@ -90,33 +85,7 @@ void pico_cdc_disable_printf(void) {
     stdio_set_driver_enabled(&stdio_driver, false);
 }
 
-#ifdef PICO_PIO_USB_HOST_ENABLE
-void __not_in_flash_func(core1_main)(void) {
-  sleep_ms(10);
-
-  // Use tuh_configure() to pass pio configuration to the host stack
-  // Note: tuh_configure() must be called before
-  pio_usb_configuration_t pio_cfg = PIO_USB_DEFAULT_CONFIG;
-  pio_cfg.alarm_pool = (void*)alarm_pool_create(2, 8);
-  tuh_configure(1, TUH_CFGID_RPI_PIO_USB_CONFIGURATION, &pio_cfg);
-
-  // To run USB SOF interrupt in core1, init host stack for pio_usb (roothub
-  // port1) on core1
-  tuh_init(1);
-
-  while (true) {
-    tuh_task(); // tinyusb host task
-  }
-}
-#endif
-
 void protocol_setup(void) {
-#ifdef PICO_PIO_USB_HOST_ENABLE
-    sleep_ms(10);
-    multicore_reset_core1();
-    // all USB task run in core1
-    multicore_launch_core1(core1_main);
-#endif
     tusb_init();
     pico_cdc_enable_printf();
     EEPROM_Init();

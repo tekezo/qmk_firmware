@@ -87,13 +87,13 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance,
     }
     report_descriptor_parser_user(instance, desc_report, desc_len);
 
+    tuh_hid_set_protocol(dev_addr, instance, HID_PROTOCOL_REPORT);
+
     uint8_t const itf_protocol = tuh_hid_interface_protocol(dev_addr, instance);
     if (itf_protocol == HID_ITF_PROTOCOL_KEYBOARD) {
         kbd_addr     = dev_addr;
         kbd_instance = instance;
     }
-
-    tuh_hid_set_protocol(dev_addr, instance, HID_PROTOCOL_REPORT);
 
     tuh_hid_receive_report(dev_addr, instance);
 }
@@ -101,6 +101,8 @@ void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance,
 void tuh_hid_umount_cb(uint8_t dev_addr, uint8_t instance) {
     on_disconnect_device_user(instance);
     hid_disconnect_flag = true;
+    kbd_addr = 0;
+    kbd_instance = 0;
 }
 
 void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
