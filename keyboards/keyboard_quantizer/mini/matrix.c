@@ -28,7 +28,7 @@ static uint8_t pre_keyreport[8];
 
 bool report_parser(uint8_t instance, uint8_t const* buf, uint16_t len,
                    matrix_row_t* current_matrix);
-int  send_led_report(uint8_t* leds);
+bool send_led_report(uint8_t* leds);
 
 void matrix_init_custom(void) {
     setPinOutput(KQ_PIN_LED);
@@ -40,8 +40,11 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]) {
 
     static uint8_t keyboard_led;
     if (keyboard_led != host_keyboard_leds()) {
-        keyboard_led = host_keyboard_leds();
-        send_led_report(&keyboard_led);
+        uint8_t led_backup = keyboard_led;
+        keyboard_led       = host_keyboard_leds();
+        if (!send_led_report(&keyboard_led)) {
+            keyboard_led = led_backup;
+        }
     }
 
     if (led_count >= 0) {
@@ -164,11 +167,11 @@ void on_disconnect_device_user(uint8_t device) {
     memset(pre_keyreport, 0, sizeof(pre_keyreport));
 }
 
-int send_led_report(uint8_t* leds) {
+bool send_led_report(uint8_t* leds) {
     if (kbd_addr != 0) {
-        tuh_hid_set_report(kbd_addr, kbd_instance, 0, HID_REPORT_TYPE_OUTPUT,
-                           leds, sizeof(*leds));
+        return tuh_hid_set_report(kbd_addr, kbd_instance, 0,
+                                  HID_REPORT_TYPE_OUTPUT, leds, sizeof(*leds));
     }
 
-    return 0;
+    return false;
 }
