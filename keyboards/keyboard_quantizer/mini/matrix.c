@@ -11,6 +11,7 @@
 #include "quantum.h"
 
 #include "tusb.h"
+#include "hardware/sync.h"
 
 extern matrix_row_t* matrix_dest;
 matrix_row_t* matrix_mouse_dest;
@@ -21,7 +22,7 @@ static int32_t led_count = -1;
 static uint8_t kbd_addr;
 static uint8_t kbd_instance;
 static uint8_t hid_report_buffer[64];
-static uint8_t hid_report_size;
+static volatile uint8_t hid_report_size;
 static uint8_t hid_instance;
 static bool    hid_disconnect_flag;
 static uint8_t pre_keyreport[8];
@@ -120,11 +121,23 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
         led_count = timer_read();
     }
 
-    while (hid_report_size > 0) {
+    int cnt = 0;
+    while (hid_report_size > 0 && cnt++ < 50000) {
+        if (cnt == 1) {
+            dprintf("report stacked(%d)...", hid_report_size);
+        }
+        busy_wait_us(1);
         continue;
     }
+
+    if (cnt > 0) {
+        dprintf("(%d us)\n", cnt);
+    }
+
     hid_instance = instance;
     memcpy(hid_report_buffer, report, len);
+    __dsb();
+    // hid_report_size is used as trigger of report parser
     hid_report_size = len;
 
     tuh_hid_receive_report(dev_addr, instance);
