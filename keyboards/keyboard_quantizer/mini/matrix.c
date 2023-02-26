@@ -83,38 +83,23 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]) {
     }
 }
 
-void tuh_hid_set_protocol_complete_cb(uint8_t dev_addr, uint8_t instance,
-                                      uint8_t protocol) {
-    // kick report receive chain
-    tuh_hid_receive_report(dev_addr, instance);
-
-    uint8_t const itf_protocol = tuh_hid_interface_protocol(dev_addr, instance);
-    if (itf_protocol == HID_ITF_PROTOCOL_KEYBOARD) {
-        kbd_addr     = dev_addr;
-        kbd_instance = instance;
-    }
-
-    for (instance = instance + 1; instance < tuh_hid_instance_count(dev_addr);
-         instance++) {
-        bool res =
-            tuh_hid_set_protocol(dev_addr, instance, HID_PROTOCOL_REPORT);
-        if (res) {
-            // xfer complete calls next set_protocol
-            return;
-        } else {
-            // if set_protocol is failed, kick report receive chain
-            tuh_hid_receive_report(dev_addr, instance);
-        }
-    }
-}
-
 void tuh_mount_cb(uint8_t dev_addr) {
     if (led_count < 0) {
         led_count = timer_read();
     }
 
-    // kick set_protocol chain
-    tuh_hid_set_protocol(dev_addr, 0, HID_PROTOCOL_REPORT);
+    for (int instance = 0; instance < tuh_hid_instance_count(dev_addr);
+         instance++) {
+        tuh_hid_set_protocol(dev_addr, instance, HID_PROTOCOL_REPORT);
+        tuh_hid_receive_report(dev_addr, instance);
+
+        uint8_t const itf_protocol =
+            tuh_hid_interface_protocol(dev_addr, instance);
+        if (itf_protocol == HID_ITF_PROTOCOL_KEYBOARD) {
+            kbd_addr     = dev_addr;
+            kbd_instance = instance;
+        }
+    }
 }
 
 void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance,
