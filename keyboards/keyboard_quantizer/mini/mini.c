@@ -34,6 +34,7 @@
 #include "hardware/uart.h"
 #include "hardware/irq.h"
 #include "hardware/resets.h"
+#include "hardware/watchdog.h"
 #include "pico/multicore.h"
 #include "cdc_device.h"
 #include "tusb.h"
@@ -49,11 +50,12 @@ extern uint8_t hid_info_cnt;
 
 keyboard_config_t keyboard_config;
 
+static volatile bool core1_active;
 static volatile bool core1_stop_trigger;
 static volatile bool core1_start_trigger;
 
 void __not_in_flash_func(core1_main)(void) {
-    sleep_ms(10);
+    core1_active = true;
 
     // Use tuh_configure() to pass pio configuration to the host stack
     // Note: tuh_configure() must be called before
@@ -83,6 +85,7 @@ void __not_in_flash_func(core1_main)(void) {
 }
 
 void pico_before_flash_operation(void) {
+    if (!core1_active) return;
     core1_stop_trigger = true;
     while (core1_stop_trigger) {
         continue;
@@ -90,6 +93,7 @@ void pico_before_flash_operation(void) {
 }
 
 void pico_after_flash_operation(void) {
+    if (!core1_active) return;
     core1_start_trigger = true;
     while (core1_start_trigger) {
         continue;
