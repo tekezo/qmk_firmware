@@ -35,6 +35,7 @@
 #include "hardware/irq.h"
 #include "hardware/resets.h"
 #include "hardware/watchdog.h"
+#include "hardware/exception.h"
 #include "pico/multicore.h"
 #include "cdc_device.h"
 #include "tusb.h"
@@ -121,11 +122,18 @@ void pico_cdc_receive_cb(uint8_t const *buf, uint32_t cnt) {
     }
 }
 
+void hardfault_handler(void) {
+    bootloader_jump();
+}
+
 void keyboard_post_init_kb_rev(void) {
     debug_enable = false;
 
     multicore_reset_core1();
     multicore_launch_core1(core1_main);
+
+    exception_set_exclusive_handler(HARDFAULT_EXCEPTION, hardfault_handler);
+    watchdog_hw->scratch[0] = 0; // disable bootloader jump by watchdog
 
     if (keyboard_config.layer_to_combo) {
         convert_layer_to_combo();
