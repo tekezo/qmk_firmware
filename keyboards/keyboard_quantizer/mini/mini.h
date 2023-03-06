@@ -19,7 +19,7 @@
 #include <stdint.h>
 #include "keycode.h"
 
-#define KQ_PIN_LED 4
+#define KQ_PIN_LED 7
 
 void uart_recv_callback(uint8_t dat);
 void uart_buf_init(void);
