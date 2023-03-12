@@ -29,6 +29,10 @@
 #include "usb_descriptors.h"
 #include "util.h"
 
+#ifndef SERIAL_NUMBER
+#define SERIAL_NUMBER 123456
+#endif
+
 /* A combination of interfaces must have a unique product id, since PC will save
  * device driver after the first plug. Same VID/PID with different interface e.g
  * MSC (first), then CDC (later) will possibly cause system error on PC.
