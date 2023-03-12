@@ -71,12 +71,14 @@ void uart_recv_callback(uint8_t dat) {
 bool uart_available(void) { return cnt > 0; }
 
 uint8_t uart_getchar(void) {
+    __interrupt_disable__();
     uint8_t c = 0;
     if (cnt > 0) {
         c = buf[ridx];
         cnt--;
         ridx = (ridx + 1) % sizeof(buf);
     }
+    __interrupt_enable__(NULL);
 
     return c;
 }
