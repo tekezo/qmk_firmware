@@ -85,7 +85,7 @@ void spis_init(spis_handler_t spis_handler) {
                                             // size transfer_data_size)
                           false);           // don't start yet
 
-    memset(txbuf, 0xff, sizeof(txbuf));
+    memset(txbuf, 0xfe, sizeof(txbuf));
 
     printf("Configure RX DMA\n");
 
