@@ -32,6 +32,9 @@ jobs:
         run: pip3 install -r requirements.txt
 
       # Runs a single command using the runners shell
+      - name: git config
+        run: git config --global --add safe.directory /__w/qmk_firmware/qmk_firmware
+
       - name: Build keyboard_quantizer/rp
         run: make keyboard_quantizer/rp:default:uf2
 
