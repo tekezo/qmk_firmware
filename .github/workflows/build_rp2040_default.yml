@@ -31,6 +31,9 @@ jobs:
       - name: Install dependencies
         run: pip3 install -r requirements.txt
 
+      - name: Install libstdc++
+        run: apt-get update && apt-get install libstdc++-arm-none-eabi-newlib -y
+
       # Runs a single command using the runners shell
       - name: git config
         run: git config --global --add safe.directory /__w/qmk_firmware/qmk_firmware
@@ -47,11 +50,11 @@ jobs:
       - name: Build crkbd_ec_right/default
         run: make sekigon/crkbd_ec:default:uf2 HANDEDNESS=right && mv sekigon_crkbd_ec_default.uf2 sekigon_crkbd_ec_default_right.uf2
 
-      - name: Build crkbd_ec_left/test
-        run: make sekigon/crkbd_ec:test:uf2 HANDEDNESS=left && mv sekigon_crkbd_ec_test.uf2 sekigon_crkbd_ec_test_left.uf2
+      - name: Build crkbd_ec_left/empty
+        run: make sekigon/crkbd_ec:empty:uf2 HANDEDNESS=left && mv sekigon_crkbd_ec_empty.uf2 sekigon_crkbd_ec_empty_left.uf2
 
-      - name: Build crkbd_ec_right/test
-        run: make sekigon/crkbd_ec:test:uf2 HANDEDNESS=right && mv sekigon_crkbd_ec_test.uf2 sekigon_crkbd_ec_test_right.uf2
+      - name: Build crkbd_ec_right/empty
+        run: make sekigon/crkbd_ec:empty:uf2 HANDEDNESS=right && mv sekigon_crkbd_ec_empty.uf2 sekigon_crkbd_ec_empty_right.uf2
 
       - uses: actions/upload-artifact@v2
         with:
