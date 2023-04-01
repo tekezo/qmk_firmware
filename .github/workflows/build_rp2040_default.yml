@@ -1,0 +1,54 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Build firmware
+
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push or pull request events but only for the rp2040 branch
+  push:
+    branches: [ rp2040 ]
+  pull_request:
+    branches: [ rp2040 ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    container: qmkfm/base_container
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: pip3 install -r requirements.txt
+
+      # Runs a single command using the runners shell
+      - name: Build keyboard_quantizer/rp
+        run: make keyboard_quantizer/rp:default:uf2
+
+      - name: Build crkbd_ec_left/default
+        run: make sekigon/crkbd_ec:default:uf2 HANDEDNESS=left && mv sekigon_crkbd_ec_default.uf2 sekigon_crkbd_ec_default_left.uf2
+
+      - name: Build crkbd_ec_right/default
+        run: make sekigon/crkbd_ec:default:uf2 HANDEDNESS=right && mv sekigon_crkbd_ec_default.uf2 sekigon_crkbd_ec_default_right.uf2
+
+      - name: Build crkbd_ec_left/test
+        run: make sekigon/crkbd_ec:test:uf2 HANDEDNESS=left && mv sekigon_crkbd_ec_test.uf2 sekigon_crkbd_ec_test_left.uf2
+
+      - name: Build crkbd_ec_right/test
+        run: make sekigon/crkbd_ec:test:uf2 HANDEDNESS=right && mv sekigon_crkbd_ec_test.uf2 sekigon_crkbd_ec_test_right.uf2
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: firmware_uf2
+          path: ./*.uf2
+
