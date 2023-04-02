@@ -71,13 +71,15 @@ bool parse_report(uint8_t interface,
       func = mouse_report_parser;
     break;
     case 0x0180:
-      func = system_report_parser;
+      //func = system_report_parser;
+      return false;
     break;
     case 0x0C01:
-      func = consumer_report_parser;
+      //func = consumer_report_parser;
+      return false;
     break;
   default:
-    vendor_report_parser(collection->usage_page, member, report, len);
+    //vendor_report_parser(collection->usage_page, member, report, len);
     return false;
     break;
   }
