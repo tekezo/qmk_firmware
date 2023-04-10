@@ -38,7 +38,12 @@ static void spis_handler(uint8_t const* received, uint32_t receive_len,
         next_send[1] = qt_cmd_buf[0];
         next_send[2] = qt_cmd_buf[1];
         next_send[3] = qt_cmd_buf[2];
-        qt_cmd_new = false;
+        qt_cmd_new   = false;
+    } else {
+        next_send[0] = 0xfe;
+        next_send[1] = 0xfe;
+        next_send[2] = 0xfe;
+        next_send[3] = 0xfe;
     }
 
     spis_start();
