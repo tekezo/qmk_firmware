@@ -121,24 +121,26 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
         led_count = timer_read();
     }
 
-    int cnt = 0;
-    while (hid_report_size > 0 && cnt++ < 50000) {
-        if (cnt == 1) {
-            dprintf("report stacked(%d)...", hid_report_size);
+    if (len > 0) {
+        int cnt = 0;
+        while (hid_report_size > 0 && cnt++ < 50000) {
+            if (cnt == 1) {
+                dprintf("report stacked(%d)...", hid_report_size);
+            }
+            busy_wait_us(1);
+            continue;
         }
-        busy_wait_us(1);
-        continue;
-    }
 
-    if (cnt > 0) {
-        dprintf("(%d us)\n", cnt);
-    }
+        if (cnt > 0) {
+            dprintf("(%d us)\n", cnt);
+        }
 
-    hid_instance = instance;
-    memcpy(hid_report_buffer, report, len);
-    __dsb();
-    // hid_report_size is used as trigger of report parser
-    hid_report_size = len;
+        hid_instance = instance;
+        memcpy(hid_report_buffer, report, len);
+        __dsb();
+        // hid_report_size is used as trigger of report parser
+        hid_report_size = len;
+    }
 
     tuh_hid_receive_report(dev_addr, instance);
 }

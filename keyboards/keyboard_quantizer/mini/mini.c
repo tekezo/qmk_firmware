@@ -62,6 +62,7 @@ void __not_in_flash_func(core1_main)(void) {
     // Note: tuh_configure() must be called before
     pio_usb_configuration_t pio_cfg = PIO_USB_DEFAULT_CONFIG;
     pio_cfg.pin_dp = 4;
+    pio_cfg.extra_error_retry_count = 10;
     tuh_configure(1, TUH_CFGID_RPI_PIO_USB_CONFIGURATION, &pio_cfg);
 
     // To run USB SOF interrupt in core1, init host stack for pio_usb (roothub
