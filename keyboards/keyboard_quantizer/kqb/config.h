@@ -2,7 +2,7 @@
 #pragma once
 
 #undef PRODUCT_ID
-#define PRODUCT_ID   0x999b
+#define PRODUCT_ID   0x0000
 
 #define BMP_PAGE_SIZE 1024
 
