@@ -84,6 +84,11 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]) {
     }
 }
 
+static volatile bool set_protocol_complete = false;
+void                 tuh_hid_set_protocol_complete_cb(uint8_t dev_addr, uint8_t instance, uint8_t protocol) {
+    set_protocol_complete = true;
+}
+
 void tuh_mount_cb(uint8_t dev_addr) {
     if (led_count < 0) {
         led_count = timer_read();
@@ -91,8 +96,17 @@ void tuh_mount_cb(uint8_t dev_addr) {
 
     for (int instance = 0; instance < tuh_hid_instance_count(dev_addr);
          instance++) {
-        tuh_hid_set_protocol(dev_addr, instance, HID_PROTOCOL_REPORT);
-        tuh_hid_receive_report(dev_addr, instance);
+        if (tuh_hid_get_protocol(dev_addr, instance) == HID_PROTOCOL_BOOT) {
+            set_protocol_complete = false;
+            __compiler_memory_barrier();
+            tuh_hid_set_protocol(dev_addr, instance, HID_PROTOCOL_REPORT);
+
+            uint16_t timeout_ms = 0;
+            while (!set_protocol_complete && ++timeout_ms < 100) {
+                wait_ms(1);
+                tuh_task();
+            }
+        }
 
         uint8_t const itf_protocol =
             tuh_hid_interface_protocol(dev_addr, instance);
@@ -106,6 +120,7 @@ void tuh_mount_cb(uint8_t dev_addr) {
 void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance,
                       uint8_t const* desc_report, uint16_t desc_len) {
     report_descriptor_parser_user(instance, desc_report, desc_len);
+    tuh_hid_receive_report(dev_addr, instance);
 }
 
 void tuh_hid_umount_cb(uint8_t dev_addr, uint8_t instance) {
@@ -137,7 +152,7 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
 
         hid_instance = instance;
         memcpy(hid_report_buffer, report, len);
-        __dsb();
+        __compiler_memory_barrier();
         // hid_report_size is used as trigger of report parser
         hid_report_size = len;
     }
