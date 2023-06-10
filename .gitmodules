@@ -24,8 +24,8 @@
 	url = https://github.com/qmk/printf
 [submodule "lib/pico-sdk"]
 	path = lib/pico-sdk
-	url = https://github.com/raspberrypi/pico-sdk.git
-    ignore = dirty
+	url = https://github.com/sekigon-gonnoc/pico-sdk.git
+	branch = for-keyboard-quantizer
 [submodule "lib/Pico-PIO-USB"]
 	path = lib/Pico-PIO-USB
 	url = git@github.com:sekigon-gonnoc/Pico-PIO-USB.git
